@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <title>Veoex</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="custom.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/custom.css">
   </head>
   <body>
-	<script type="text/javascript" src="jquery.js" ></script>
-	<script type="text/javascript" src="bootstrap.js" ></script>
+	<script type="text/javascript" src="js/jquery.js" ></script>
+	<script type="text/javascript" src="js/bootstrap.js" ></script>
 	
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container-fluid">
-  <a class="navbar-brand balance" href="#">VEOEX</a>
+  <a class="navbar-brand" href="#">VEOEX</a>
      
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -21,30 +21,27 @@
 
     <div class="collapse navbar-collapse" id="navbarColor02">
       <ul class="navbar-nav me-auto">
-	  <li class="nav-item"><hr class="border-top"></li>
-	  <li class="nav-item">
+	  <li class="nav-item accountNotSet">
           <a class="nav-link" href="#" id="newAccountLink">New Account
           </a>
         </li>
-	  <li class="nav-item">
-          <a class="nav-link" href="#" id="holdingsLink">Send
+	  <li class="nav-item accountSet">
+          <a class="nav-link accountSet" href="#" id="sendLink">Send
           </a>
         </li>
-		<li class="nav-item">
+		<li class="nav-item accountSet">
           <a class="nav-link" href="#" id="receiveLink">Receive
           </a>
         </li>
-		<li class="nav-item">
-          <a class="nav-link" href="#" id="forgetLink">Forget</a>
-        </li>
-		<li class="nav-item"><hr class="border-top"></li>
-        <li class="nav-item">
+        <li class="nav-item accountSet">
           <a class="nav-link" href="#" id="browseLink">Browse
           </a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item accountSet">
           <a class="nav-link" href="#" id="createLink">Create</a>
-		  
+		</li>
+		<li class="nav-item accountSet">
+          <a class="nav-link" href="#" id="forgetLink">Forget</a>
         </li>
 		<li class="nav-item"><hr class="border-top"></li>
 		  <li class="nav-item">
@@ -58,16 +55,16 @@
     </div>
   </div>
 </nav>
-<div id="receive" class="route" style="display:none">
-<div class="form-group col-sm-6">
+<div id="receive" class="col-sm-6 route" style="display:none">
+<div class="form-group">
       <div id="pub" style="word-wrap:break-word"></div>
         <button class="btn btn-light my-2 my-sm-0" type="submit" id="copyButton" >Copy</button>
 	 </div>
 	 
 	 
 </div>
-<div id="newAccount" class="route" style="display:none">
-<div class="form-group col-sm-6">
+<div id="newAccount" class="col-sm-6 route" style="display:none">
+<div class="form-group">
 <form>
   <fieldset>
   <div class="input-group mb-3">
@@ -82,14 +79,14 @@
       
 
 </div>
-<div id="browse" class="route" style="display:none">
-<div class="col-sm-6" id="browseTable"></div>
+<div id="browse" class="col-sm-6 route" style="display:none">
+
 </div>
-<div id="holdings" class="route" style="display:none">
-<div class="col-sm-6" id="positionsTable"></div>
+<div id="send" class="col-sm-6 route" style="display:none">
+
 <form>
   <fieldset>
-      <div class="form-group col-sm-6">
+      <div class="form-group">
 	  <div class="input-group mb-3">
       <input type="text" class="form-control sendInput" id="type" placeholder="Currency" disabled>
 	  </div>
@@ -105,10 +102,10 @@
   </fieldset>
 </form>
 </div>
-<div id="create" class="route" style="display:none">
+<div id="create" class="col-sm-6 route" style="display:none">
 <form>
   <fieldset>
-  <div class="form-group col-sm-6">
+  <div class="form-group">
 	<div class="form-group">
 	<div class="input-group mb-3">
 	<input type="text" class="form-control createInput" id="statement" placeholder="Statement">
@@ -134,10 +131,10 @@
   </fieldset>
 </form>
 </div>
-<div id="settings" class="route" style="display:none">
+<div id="settings" class="col-sm-6 route" style="display:none">
 <form>
   <fieldset>
-      <div class="form-group col-sm-6">
+      <div class="form-group">
 	  <div class="form-group mb-3">
 	  <label id="nodeServer" class="col-form-label">Node</label>
 	  <div class="input-group mb-3">
@@ -179,7 +176,8 @@
   </fieldset>
 </form>
 </div>
-	<div class="modal">
+	
+<div class="modal">
 	<div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -201,7 +199,7 @@
   <button type="button" class="btn-close" id="alertClose"></button>
   <span id="alertText"></span>
 </div>
-	<script type="text/javascript" src="main.js" ></script>
-  </body>
-
+	
+<script type="text/javascript" src="js/main.js" ></script>
+</body>
 </html>
