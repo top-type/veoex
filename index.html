@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <title>Veoex</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="custom.css">
+  </head>
+  <body>
+	<script type="text/javascript" src="jquery.js" ></script>
+	<script type="text/javascript" src="bootstrap.js" ></script>
+	
+	<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+  <a class="navbar-brand balance" href="#">VEOEX</a>
+     
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarColor02">
+      <ul class="navbar-nav me-auto">
+	  <li class="nav-item"><hr class="border-top"></li>
+	  <li class="nav-item">
+          <a class="nav-link" href="#" id="newAccountLink">New Account
+          </a>
+        </li>
+	  <li class="nav-item">
+          <a class="nav-link" href="#" id="holdingsLink">Send
+          </a>
+        </li>
+		<li class="nav-item">
+          <a class="nav-link" href="#" id="receiveLink">Receive
+          </a>
+        </li>
+		<li class="nav-item">
+          <a class="nav-link" href="#" id="forgetLink">Forget</a>
+        </li>
+		<li class="nav-item"><hr class="border-top"></li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="browseLink">Browse
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#" id="createLink">Create</a>
+		  
+        </li>
+		<li class="nav-item"><hr class="border-top"></li>
+		  <li class="nav-item">
+          <a class="nav-link" href="#" id="settingsLink">Settings</a>
+		  
+        </li>
+
+		
+      </div>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div id="receive" class="route" style="display:none">
+<div class="form-group col-sm-6">
+      <div id="pub" style="word-wrap:break-word"></div>
+        <button class="btn btn-light my-2 my-sm-0" type="submit" id="copyButton" >Copy</button>
+	 </div>
+	 
+	 
+</div>
+<div id="newAccount" class="route" style="display:none">
+<div class="form-group col-sm-6">
+<form>
+  <fieldset>
+  <div class="input-group mb-3">
+     <input class="form-control" type="password" placeholder="passphrase"  id="passphrase">
+	</div>
+         <button class="btn btn-light" type="submit" id="setButton">Set</button>
+     </div>
+	   </fieldset>
+</form>
+</div>
+        
+      
+
+</div>
+<div id="browse" class="route" style="display:none">
+<div class="col-sm-6" id="browseTable"></div>
+</div>
+<div id="holdings" class="route" style="display:none">
+<div class="col-sm-6" id="positionsTable"></div>
+<form>
+  <fieldset>
+      <div class="form-group col-sm-6">
+	  <div class="input-group mb-3">
+      <input type="text" class="form-control sendInput" id="type" placeholder="Currency" disabled>
+	  </div>
+	  <div class="input-group mb-3">
+      <input type="text" class="form-control sendInput" id="recipient" placeholder="Recipient">
+	  </div>
+	  <div class="input-group mb-3">
+      <button class="btn btn-light input-group-text" id="maxButton">Max</button>
+      <input type="text" class="form-control sendInput" id="amount" aria-label="Amount" placeholder="Amount">
+	  </div>
+	  <button class="btn btn-light" id="sendButton">Send</button>
+	   </div>
+  </fieldset>
+</form>
+</div>
+<div id="create" class="route" style="display:none">
+<form>
+  <fieldset>
+  <div class="form-group col-sm-6">
+	<div class="form-group">
+	<div class="input-group mb-3">
+	<input type="text" class="form-control createInput" id="statement" placeholder="Statement">
+	</div>
+	<div class="input-group mb-3">
+	<select class="form-select createInput" id="statementSelect">
+        <option>True</option>
+        <option>False</option>
+    </select>
+	</div>
+	<div class="input-group mb-3">
+	<input type="text" class="form-control createInput" id="amount1" placeholder="Risk">
+	</div>
+	<div class="input-group mb-3">
+	<input type="text" class="form-control createInput" id="amount2" placeholder="To win">
+	</div>
+	<div class="input-group mb-3">
+	<input type="text" class="form-control createInput" id="expires" placeholder="expires (in blocks)">
+	</div>
+	<button class="btn btn-light" id="createButton">Create</button>
+	</div>
+  </div>
+  </fieldset>
+</form>
+</div>
+<div id="settings" class="route" style="display:none">
+<form>
+  <fieldset>
+      <div class="form-group col-sm-6">
+	  <div class="form-group mb-3">
+	  <label id="nodeServer" class="col-form-label">Node</label>
+	  <div class="input-group mb-3">
+      <input type="text" class="form-control" id="nodeIp" placeholder="IP">
+	  &nbsp;
+	  <input type="text" class="form-control" id="nodePort" placeholder="Port">
+	  &nbsp;
+	  <button class="btn btn-light" type="button" id="nodeButton">Set</button>
+	  </div>
+	  </div>
+	  <div class="form-group mb-3">
+	  <label id="contractServer" class="col-form-label">Contracts</label>
+      <div class="input-group mb-3">
+      <input type="text" class="form-control" id="contractIp" placeholder="IP">
+	  &nbsp;
+	  <input type="text" class="form-control" id="contractPort" placeholder="Port">
+	  &nbsp;
+	  <button class="btn btn-light" type="button" id="contractButton">Set</button>
+	  </div>
+	  </div>
+	  <div class="form-group mb-3">
+	  <label id="exploreServer" class="col-form-label" >Explorer</label>
+      <div class="input-group mb-3">
+      <input type="text" class="form-control" id="exploreIp" placeholder="IP">
+	  &nbsp;
+	  <input type="text" class="form-control" id="explorePort" placeholder="Port">
+	  &nbsp;
+	  <button class="btn btn-light" type="button" id="exploreButton">Set</button>
+	  </div>
+	  </div>
+	    <div class="form-group mb-3">
+		<label for="modeSelect" class="col-sm-2 col-form-label">Mode</label>
+		<select class="form-select" id="modeSelect">
+        <option>Basic</option>
+        <option>Advanced</option>
+		</select>
+	  </div>
+	 </div>
+  </fieldset>
+</form>
+</div>
+	<div class="modal">
+	<div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true"></span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="modalText">Send to</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" id="modalButton">Send</button>
+      </div>
+    </div>
+	</div>
+</div>
+<div class="alert alert-dismissible alert-light" id="alert">
+  <button type="button" class="btn-close" id="alertClose"></button>
+  <span id="alertText"></span>
+</div>
+	<script type="text/javascript" src="main.js" ></script>
+  </body>
+
+</html>
