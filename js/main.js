@@ -35,6 +35,8 @@ $('#forgetLink').click(function(e) {
 	e.preventDefault();
 	$('.accountSet').hide();
 	$('.accountNotSet').show();
+	forget();
+	alertMessage('FORGET', '');
 	route('newAccount');
 });
 
@@ -72,9 +74,19 @@ $('#setButton').click(function(e) {
 	e.preventDefault();
 	$('.accountSet').show();
 	$('.accountNotSet').hide();
-	alertMessage('SET', '')
-	route('send');
-	
+	var passphrase = $('#passphrase').val();
+	$('#passphrase').val('');
+	var regExp = /^[a-z0-9]+$/i;
+	if (regExp.test(passphrase)) {
+		if (passphrase.length > 9) {
+			keys.passphrase(passphrase);
+			localStorage.setItem('passphrase', passphrase);
+			alertMessage('SET', keys.pub().substring(0,20) + '...');
+			route('send');
+			return;
+		}
+	}
+	alertMessage('INVALID', 'Only alphanumeric and length at least 10');
 });
 
 $('#createButton').click(function(e) {
@@ -119,6 +131,11 @@ function alertMessage(type, message) {
 	$('#alert').show();
 }
 
+function forget() {
+	keys.forget();
+	localStorage.removeItem('passphrase')
+}
+
 function confirmAction(text, type, action) {
 	$('#modalButton').unbind();
 	$('#modalText').html(text);
@@ -131,8 +148,17 @@ function confirmAction(text, type, action) {
 }
 
 $(document).ready(function () {
-	$('.accountSet').hide();
-	$('.accountNotSet').show();
-	route('newAccount');
+	var pp = localStorage.getItem('passphrase')
+	if (pp) {
+		keys.passphrase(pp)
+		$('.accountSet').show();
+		$('.accountNotSet').hide();
+		route('send');
+	}
+	else {
+		$('.accountSet').hide();
+		$('.accountNotSet').show();
+		route('newAccount');
+	}
 	console.log('hello');
 });

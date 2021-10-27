@@ -1,1 +1,5 @@
-sync functionality
+set passphrase
+forget passphrase
+load key on start
+
+
