@@ -7,3 +7,7 @@
     border-radius:0px;
 	display: none;
 }
+
+tr {
+	cursor:pointer;
+} 

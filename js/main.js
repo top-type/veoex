@@ -1,14 +1,16 @@
 var balanceDB = {};
 var MODE = 0;
 var ZERO = btoa(array_to_string(integer_to_array(0, 32)));
-
-
 var sendSelection = {}
+
 function updateSendSelection(name, id, type) {
 	sendSelection.name = name;
 	sendSelection.id = id;
 	sendSelection.type = type;
-	$('#sendSelection').val(sendSelection.name);
+	var t ='';
+	if (type === 1) t = 'TRUE ';
+	if (type === 2) t = 'FALSE ';
+	$('#sendSelection').val(t+sendSelection.name);
 }
 updateSendSelection('VEO', ZERO, 0);
 
@@ -42,21 +44,25 @@ async function updateBalanceTable() {
 	var html = '';
 	for (const sc in balanceDB) {
 	var i = balanceDB[sc];
+	var type = i[1] === 1 ? ['text-primary', 'TRUE'] : ['text-warning', 'FALSE'];
+	var U = i[3] - i[2];
+	var sign = (U > 0) ? '+' : '';
+	if (U === 0) U = '';
+	else U = ' <span class="text-secondary">('+sign +(U/1e8).toFixed(8)+')</span>';
+	
 	var tr = '<tr id="'+sc+'" class="balanceRow">' +
-			'<th scope="col" class="type">'+i[1]+'</th>' +
+			'<th scope="col" class="type"><span class="'+type[0]+'">'+type[1]+'</span></th>' +
 			'<th scope="col" class="oracle">'+i[0]+'</th>' +
-			'<th scope="col">'+i[2]+'</th>' +
-			'<th scope="col">'+i[3]+'</th>' +
+			'<th scope="col">'+(i[2]/1e8).toFixed(8)+U+'</th>' +
 		'</tr>';
 		html += tr;
 	}
 	$('#balances').html(html);
-	
 	$('.balanceRow').click(function(e) {
 		e.preventDefault();
 		var type = parseInt(e.currentTarget.id[0]);
-		var id = parseInt(e.currentTarget.id.substring(1));
-		var name = $(this).children('th.type').text() + ' ' + $(this).children('th.oracle').text();
+		var id = e.currentTarget.id.substring(1);
+		var name = $(this).children('th.oracle').text();
 		updateSendSelection(name, id, type)
 	});
 };
@@ -135,23 +141,45 @@ $('#sendButton').click(async function(e) {
 		alertMessage('INVALID', '');
 		return;
 	}
-	console.log(amount);
-	var max = await spend_tx.max_send_amount(keys.pub(), to);
-	var balance = await rpc.apost(["account", keys.pub()]);
-	try {
-		var tx = await spend_tx.amake_tx(to, keys.pub(), amount);
-		if (amount > max) {
-			alertMessage('INVALID', 'Max amount to send is ' + (max/1e8).toFixed(8));
+	if (sendSelection.id === ZERO) {
+		var max = await spend_tx.max_send_amount(keys.pub(), to);
+		var text = '<em><span class="text-info">VEO</span></em>';
+		try {
+			var tx = await spend_tx.amake_tx(to, keys.pub(), amount);
+			if (amount > max) {
+				alertMessage('INVALID', 'Max amount to send is ' + (max/1e8).toFixed(8));
+				return;
+			}
+		}
+		catch {
+			alertMessage('INVALID', '');
 			return;
 		}
+		
 	}
-	catch {
-		alertMessage('INVALID', '');
-		return;
+	else {
+		var sub = balanceDB[sendSelection.type+sendSelection.id];
+		var max = sub[3];
+		var s = sendSelection.type === 1 ?  ['text-primary', 'TRUE'] : ['text-warning', 'FALSE'];
+		var text = '<em><span class="'+s[0]+'">'+s[1]+'</span> '+sendSelection.name+'</em>';
+		if (amount > max) {
+				alertMessage('INVALID', 'Max amount to send is ' + (max/1e8).toFixed(8));
+				return;
+		}
+		var a = await rpc.apost(["account", keys.pub()]);
+		var Nonce = a[2] + 1;
+        var fee = 152050;
+		var tx = ["sub_spend_tx",
+                      keys.pub(),
+                      Nonce,
+                      fee, to, amount,
+                      sendSelection.id, sendSelection.type];
+		
 	}
-	confirmAction('Send ' + (amount/1e8).toFixed(8) + ' to ' + to.substring(0,20) + '...?', 'Send', async function() {
+	
+	confirmAction('Send ' + (amount/1e8).toFixed(8) + ' of ' + text + ' to ' + to.substring(0,20) + '...?', 'Send', async function() {
 		var signed = [keys.sign(tx)];
-		var res = await rpc.apost(["txs", [-6].concat(signed)], IP, PORT);
+		var res = await rpc.apost(["txs", [-6].concat(signed)]);
 		alertMessage('SEND', res);
 		$('.sendInput').val('');
 		updatePubDisplay();
@@ -216,6 +244,12 @@ $('#alertClose').click(function(e) {
 	$('#alert').hide();
 });
 
+$('.navbar-brand').click(function(e) {
+	e.preventDefault();
+	updateSendSelection('VEO', ZERO, 0);
+	route('send');
+});
+
 function alertMessage(type, message) {
 	$('#alertText').html('<strong>'+type+'</strong> ' + message);
 	$('#alert').show();
@@ -237,7 +271,13 @@ async function updatePubDisplay() {
 	var ubalance = await rpc.apost(["account", keys.pub()]);
 	if (ubalance !== 0) ubalance = ubalance[1];
 	else ubalance = balance;
-	$('.navbar-brand').text(keys.pub().substr(0,5) + ': ' + (balance/1e8).toFixed(8) + ' ' + (ubalance/1e8).toFixed(8));
+	var U = ubalance - balance;
+	var sign = (U > 0) ? '+' : '';
+	if (U === 0) U = '';
+	else U = '<span class="text-secondary">('+sign +(U/1e8).toFixed(8)+') </span>';
+	if (U === 0) U = '';
+	U +=  '<span class="text-info">VEO</span>'
+	$('.navbar-brand').html((balance/1e8).toFixed(8) + ' ' + U);
 }
 
 function confirmAction(text, type, action) {
@@ -251,7 +291,7 @@ function confirmAction(text, type, action) {
 	$('.modal').modal('show')
 }
 
-$(document).ready(function () {
+$(document).ready(async function () {
 	var pp = localStorage.getItem('passphrase')
 	if (pp) {
 		keys.passphrase(pp)
@@ -265,6 +305,11 @@ $(document).ready(function () {
 		$('.accountNotSet').show();
 		route('newAccount');
 	}
+	
+	await updateBalances();
+	await updateBalanceTable();
 	setInterval(updatePubDisplay, 10000);
+	setInterval(updateBalances, 20000);
+	setInterval(updateBalanceTable, 5000);
 	console.log('hello');
 });
