@@ -67,9 +67,6 @@ async function updateBalanceTable() {
 	});
 };
 
-
-
-
 function route(r) {
 	$('.route').hide();
 	$('#'+r).show();
@@ -133,9 +130,23 @@ $('#copyButton').click(function(e) {
 	alertMessage('COPIED', '')
 });
 
+$('#maxButton').click(async function(e) {
+	e.preventDefault();
+	if (sendSelection.id === ZERO) {
+		var to = $('#recipient').val();
+		var max = await spend_tx.max_send_amount(keys.pub(), to);
+		console.log(max)
+		$('#sendAmount').val((max[0]/1e8).toFixed(8));
+	}
+	else {
+		var max = balanceDB[sendSelection.type + sendSelection.id][3];
+		$('#sendAmount').val((max/1e8).toFixed(8));
+	}
+});
+
 $('#sendButton').click(async function(e) {
 	e.preventDefault();
-	to = $('#recipient').val();
+	var to = $('#recipient').val();
 	amount = Math.floor(parseFloat($('#sendAmount').val()) * 1e8);
 	if (isNaN(amount) || (amount <= 0)) {
 		alertMessage('INVALID', '');
