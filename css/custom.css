@@ -11,3 +11,8 @@
 tr {
 	cursor:pointer;
 } 
+
+.spinner-border {
+    width: 20px; 
+    height: 20px;
+}

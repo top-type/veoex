@@ -14,6 +14,10 @@ function updateSendSelection(name, id, type) {
 }
 updateSendSelection('VEO', ZERO, 0);
 
+function spin(id) {
+	$('#'+id).html('<span class="spinner-border" role="status"></span>');
+}
+
 async function updateBalances() {
 	var account = await rpc.apost(["account", keys.pub()], EXPLORER_IP, EXPLORER_PORT);
 	var contractIds = account[1][3].slice(1);
@@ -133,10 +137,16 @@ $('#copyButton').click(function(e) {
 $('#maxButton').click(async function(e) {
 	e.preventDefault();
 	if (sendSelection.id === ZERO) {
+		spin('maxButton');
 		var to = $('#recipient').val();
-		var max = await spend_tx.max_send_amount(keys.pub(), to);
-		console.log(max)
-		$('#sendAmount').val((max[0]/1e8).toFixed(8));
+		try {
+			var max = await spend_tx.max_send_amount(keys.pub(), to);
+			$('#sendAmount').val((max[0]/1e8).toFixed(8));
+		}
+		catch {
+		}
+		
+		$('#maxButton').html('Max');
 	}
 	else {
 		var max = balanceDB[sendSelection.type + sendSelection.id][3];
@@ -154,7 +164,7 @@ $('#sendButton').click(async function(e) {
 	}
 	if (sendSelection.id === ZERO) {
 		var max = await spend_tx.max_send_amount(keys.pub(), to);
-		var text = '<em><span class="text-info">VEO</span></em>';
+		var text = '<em><span class="text-info">$VEO</span></em>';
 		try {
 			var tx = await spend_tx.amake_tx(to, keys.pub(), amount);
 			if (amount > max) {
@@ -287,7 +297,7 @@ async function updatePubDisplay() {
 	if (U === 0) U = '';
 	else U = '<span class="text-secondary">('+sign +(U/1e8).toFixed(8)+') </span>';
 	if (U === 0) U = '';
-	U +=  '<span class="text-info">VEO</span>'
+	U +=  '<span class="text-info">$VEO</span>'
 	$('.navbar-brand').html((balance/1e8).toFixed(8) + ' ' + U);
 }
 
