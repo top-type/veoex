@@ -75,7 +75,7 @@
     </div>
   </div>
 </nav>
-<div id="receive" class="col-sm-6 route" style="display:none">
+<div id="receive" class="col-sm-8 route" style="display:none">
 <div class="form-group">
       <div id="pub" style="word-wrap:break-word"></div>
         <button class="btn btn-light my-2 my-sm-0" type="submit" id="copyButton" >Copy</button>
@@ -83,7 +83,7 @@
 	 
 	 
 </div>
-<div id="newAccount" class="col-sm-6 route" style="display:none">
+<div id="newAccount" class="col-sm-8 route" style="display:none">
 <div class="form-group">
 <form>
   <fieldset>
@@ -99,30 +99,33 @@
       
 
 </div>
-<div id="browse" class="col-sm-6 route" style="display:none">
+<div id="browse" class="col-sm-8 route" style="display:none">
 
 </div>
-<div id="send" class="col-sm-6 route" style="display:none">
-
+<div id="send" class="col-sm-8 route" style="display:none">
+<table class="table table-hover">
+	<tbody id="balances">
+	</tbody>
+</table>
 <form>
   <fieldset>
       <div class="form-group">
 	  <div class="input-group mb-3">
-      <input type="text" class="form-control sendInput" id="type" placeholder="Currency" disabled>
+      <input type="text" class="form-control" id="sendSelection" disabled>
 	  </div>
 	  <div class="input-group mb-3">
       <input type="text" class="form-control sendInput" id="recipient" placeholder="Recipient">
 	  </div>
 	  <div class="input-group mb-3">
       <button class="btn btn-light input-group-text" id="maxButton">Max</button>
-      <input type="text" class="form-control sendInput" id="amount" aria-label="Amount" placeholder="Amount">
+      <input type="text" class="form-control sendInput" id="sendAmount" aria-label="Amount" placeholder="Amount">
 	  </div>
 	  <button class="btn btn-light" id="sendButton">Send</button>
 	   </div>
   </fieldset>
 </form>
 </div>
-<div id="create" class="col-sm-6 route" style="display:none">
+<div id="create" class="col-sm-8 route" style="display:none">
 <form>
   <fieldset>
   <div class="form-group">
@@ -151,7 +154,7 @@
   </fieldset>
 </form>
 </div>
-<div id="settings" class="col-sm-6 route" style="display:none">
+<div id="settings" class="col-sm-8 route" style="display:none">
 <form>
   <fieldset>
       <div class="form-group">

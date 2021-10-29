@@ -25,11 +25,11 @@ var spend_tx = (function () {
         };
         return(tx);
     };
-    async function max_send_amount(pub, to, callback){
+    async function max_send_amount(pub, to){
         var acc = await rpc.apost(["account", pub]);
         var bal = acc[1];
         var [fee, tx_type] = await afee_lookup(to);
-        callback(bal-fee-1, tx_type);
+        return [bal-fee-1, tx_type];
     };
     return({
         amake_tx: amake_tx,

@@ -109,8 +109,7 @@ function keys_function1() {
     
     async function check_balance(Callback) {
         var trie_key = pubkey_64();
-        var x = await merkle.arequest_proof("accounts", trie_key);
-	Callback(x[1]);
+        return await merkle.arequest_proof("accounts", trie_key);
     }
     var update_balance_callback = function(){
         return(0);
