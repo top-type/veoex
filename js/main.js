@@ -31,13 +31,16 @@ async function updateBalances() {
 		var sub2U = await rpc.apost(["sub_accounts", type2]);
 		var oracleText = await rpc.apost(["read", 3, id], CONTRACT_IP, CONTRACT_PORT);
 		oracleText = oracleText ? atob(oracleText[1]) : undefined;
-		sub1C = sub1C[0] === 'sub_acc' ? sub1C[1] : 0;
+		sub1C = sub1C[0] === 'sub_acc' ? sub1C[1] : 'error';
 		sub1U = sub1U[0] === 'sub_acc' ? sub1U[1] : sub1C;
-		sub2C = sub2C[0] === 'sub_acc' ? sub2C[1] : 0;
+		sub2C = sub2C[0] === 'sub_acc' ? sub2C[1] : 'error';
 		sub2U = sub2U[0] === 'sub_acc' ? sub2U[1] : sub2C;
-		if ((sub1C!==0) || (sub1U!==0)) balanceDB[1+id] = [oracleText, 1, sub1C, sub1U];
-		else delete balanceDB[1+id];
-		if ((sub2C!==0) || (sub2U!==0)) balanceDB[2+id] = [oracleText, 2, sub2C, sub2U];
+		if (sub1C !== 'error') {
+			balanceDB[1+id] = [oracleText, 1, sub1C, sub1U];
+		}
+		if (sub2C !== 'error') {
+			balanceDB[2+id] = [oracleText, 2, sub2C, sub2U];
+		}
 		else delete balanceDB[2+id];
 	});
 	
@@ -48,6 +51,7 @@ async function updateBalanceTable() {
 	var html = '';
 	for (const sc in balanceDB) {
 	var i = balanceDB[sc];
+	if ((i[2] === 0) && (i[3] === 0)) continue;
 	var type = i[1] === 1 ? ['text-primary', 'TRUE'] : ['text-warning', 'FALSE'];
 	var U = i[3] - i[2];
 	var sign = (U > 0) ? '+' : '';
@@ -70,6 +74,23 @@ async function updateBalanceTable() {
 		updateSendSelection(name, id, type)
 	});
 };
+
+function createOffer(text1, type1, text2, type2, amount1, amount2, mp1, mp2, expires) {
+	function createCid(text, mp) {
+		var contract = scalar_derivative.maker(text, mp);
+		var CH = scalar_derivative.hash(contract);
+		var cid = merkle.contract_id_maker(CH, 2);
+		return cid;
+	}
+	var swap = {cid1: type1 === 0 ? ZERO : createCid(text1,mp1), cid2: type2 === 0 ? ZERO : createCid(text2,mp2),
+				type1: type1, type2: type2, amount1: amount1, amount2: amount2, partial_match: false, 
+				acc1: keys.pub(), end_limit: headers_object.top()[1] + expires};
+	var so = swaps.pack(swap);
+	var offer99 = swaps.offer_99(swap);
+	var so99 = swaps.pack(offer99);
+	return [so, so99];
+	
+}
 
 function route(r) {
 	$('.route').hide();
@@ -233,10 +254,44 @@ $('#setButton').click(function(e) {
 	alertMessage('INVALID', 'Only alphanumeric and length at least 10');
 });
 
-$('#createButton').click(function(e) {
+$('#createButton').click(async function(e) {
 	e.preventDefault();
-	alertMessage('CREATE', '')
-	
+	spin('createButton');
+	var statement = $('#statement').val();
+	var type = $('#statementSelect').val() === 'True' ? 1 : 2; 
+	var risk = Math.floor(parseFloat($('#amount1').val()) * 1e8);
+	var toWin = Math.floor(parseFloat($('#amount2').val()) * 1e8);
+	var expires = parseInt($('#expires').val());
+	[risk, toWin, expires].forEach(function(i) {
+		if (isNaN(i) || (i <= 0)) {
+		alertMessage('INVALID', '');
+		$('#createButton').html('Create');
+		return;
+		}
+	})
+	var offers = createOffer('VEO', 0, statement, type, risk,  risk + toWin, 1, 1, expires);
+	if (!offers[0] || !offers[1]) {
+		alertMessage('INVALID', '');
+		$('#createButton').html('Create');
+		return;
+	}
+	try {
+		await rpc.apost(["add", 3, btoa(statement), 0, 1], CONTRACT_IP, CONTRACT_PORT);
+	}
+	catch {
+		alertMessage('INVALID', '');
+		$('#createButton').html('Create');
+		return;
+	}
+	var style = type === 1 ? ['text-primary', 'TRUE'] : ['text-warning', 'FALSE'];
+	var desc = 'Create offer risking ' + (risk/1e8).toFixed(8) + ' to win ' + (toWin/1e8).toFixed(8) +
+	' if <span class="' + style[0] + '">'+style[1]+'</span> <em>' + statement + '</em>?'; 
+	$('#createButton').html('Create');
+	confirmAction(desc, 'Create', async function() {
+		var res = await rpc.apost(["add", offers[0], offers[1]], CONTRACT_IP, CONTRACT_PORT);
+		alertMessage('CREATE', '')
+		$('.createInput').val('');
+	});
 });
 
 $('#modeSelect').on('change', function (e) {
