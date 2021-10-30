@@ -12,7 +12,7 @@ function updateSendSelection(name, id, type) {
 	if (type === 2) t = 'FALSE ';
 	$('#sendSelection').val(t+sendSelection.name);
 }
-updateSendSelection('VEO', ZERO, 0);
+updateSendSelection('$VEO', ZERO, 0);
 
 function spin(id) {
 	$('#'+id).html('<span class="spinner-border" role="status"></span>');
@@ -32,9 +32,9 @@ async function updateBalances() {
 		var oracleText = await rpc.apost(["read", 3, id], CONTRACT_IP, CONTRACT_PORT);
 		oracleText = oracleText ? atob(oracleText[1]) : undefined;
 		sub1C = sub1C[0] === 'sub_acc' ? sub1C[1] : 0;
-		sub1U = sub1U[0] === 'sub_acc' ? sub1U[1] : 0;
+		sub1U = sub1U[0] === 'sub_acc' ? sub1U[1] : sub1C;
 		sub2C = sub2C[0] === 'sub_acc' ? sub2C[1] : 0;
-		sub2U = sub2U[0] === 'sub_acc' ? sub2U[1] : 0;
+		sub2U = sub2U[0] === 'sub_acc' ? sub2U[1] : sub2C;
 		if ((sub1C!==0) || (sub1U!==0)) balanceDB[1+id] = [oracleText, 1, sub1C, sub1U];
 		else delete balanceDB[1+id];
 		if ((sub2C!==0) || (sub2U!==0)) balanceDB[2+id] = [oracleText, 2, sub2C, sub2U];
@@ -158,6 +158,7 @@ $('#sendButton').click(async function(e) {
 	e.preventDefault();
 	var to = $('#recipient').val();
 	amount = Math.floor(parseFloat($('#sendAmount').val()) * 1e8);
+	spin('sendButton');
 	if (isNaN(amount) || (amount <= 0)) {
 		alertMessage('INVALID', '');
 		return;
@@ -169,11 +170,13 @@ $('#sendButton').click(async function(e) {
 			var tx = await spend_tx.amake_tx(to, keys.pub(), amount);
 			if (amount > max) {
 				alertMessage('INVALID', 'Max amount to send is ' + (max/1e8).toFixed(8));
+				$('#sendButton').html('Send');
 				return;
 			}
 		}
 		catch {
 			alertMessage('INVALID', '');
+			$('#sendButton').html('Send');
 			return;
 		}
 		
@@ -185,6 +188,7 @@ $('#sendButton').click(async function(e) {
 		var text = '<em><span class="'+s[0]+'">'+s[1]+'</span> '+sendSelection.name+'</em>';
 		if (amount > max) {
 				alertMessage('INVALID', 'Max amount to send is ' + (max/1e8).toFixed(8));
+				$('#sendButton').html('Send');
 				return;
 		}
 		var a = await rpc.apost(["account", keys.pub()]);
@@ -197,12 +201,13 @@ $('#sendButton').click(async function(e) {
                       sendSelection.id, sendSelection.type];
 		
 	}
-	
-	confirmAction('Send ' + (amount/1e8).toFixed(8) + ' of ' + text + ' to ' + to.substring(0,20) + '...?', 'Send', async function() {
+	$('#sendButton').html('Send');
+	confirmAction('Send ' + (amount/1e8).toFixed(8) + ' ' + text + ' to ' + to.substring(0,20) + '...?', 'Send', async function() {
 		var signed = [keys.sign(tx)];
 		var res = await rpc.apost(["txs", [-6].concat(signed)]);
 		alertMessage('SEND', res);
 		$('.sendInput').val('');
+		
 		updatePubDisplay();
 	})
 	
@@ -267,7 +272,7 @@ $('#alertClose').click(function(e) {
 
 $('.navbar-brand').click(function(e) {
 	e.preventDefault();
-	updateSendSelection('VEO', ZERO, 0);
+	updateSendSelection('$VEO', ZERO, 0);
 	route('send');
 });
 
@@ -305,8 +310,9 @@ function confirmAction(text, type, action) {
 	$('#modalButton').unbind();
 	$('#modalText').html(text);
 	$('#modalButton').text(type);
-	$('#modalButton').click(function() {
-		action();
+	$('#modalButton').click(async function() {
+		spin('modalButton');
+		await action();
 		$('.modal').modal('hide')
 	})
 	$('.modal').modal('show')
