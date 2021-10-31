@@ -92,6 +92,28 @@ function createOffer(text1, type1, text2, type2, amount1, amount2, mp1, mp2, exp
 	
 }
 
+async function getOffers() {
+	var markets = await rpc.apost(["markets"], CONTRACT_IP, CONTRACT_PORT);
+	markets = markets.slice(1);
+	res = [];
+	markets.forEach(async function(m) {
+		//lol atob('JFZFTw==') -> $VEO
+		var c1 = m[4] === 0 ? [0, 'JFZFTw=='] : await rpc.apost(["read", 3, m[3]], CONTRACT_IP, CONTRACT_PORT);
+		var text1 = c1 ? atob(c1[1]) : undefined;
+		var c2 = m[6] === 0 ? [0, 'JFZFTw=='] : await rpc.apost(["read", 3, m[5]], CONTRACT_IP, CONTRACT_PORT);
+		var text2 = c2 ? atob(c2[1]) : undefined;
+		var offers = await rpc.apost(["read", m[2]], CONTRACT_IP, CONTRACT_PORT);
+		offers = offers[1][7];
+		offers = offers.slice(1);
+		offers.forEach(async function(o) {
+			console.log(o);
+			var offer = await rpc.apost(["read", 2, o[3]], CONTRACT_IP, CONTRACT_PORT);
+			res.push({text1: text1, text2: text2, offer: offer})
+		})
+	});
+	return res;
+}
+
 function route(r) {
 	$('.route').hide();
 	$('#'+r).show();
@@ -182,6 +204,7 @@ $('#sendButton').click(async function(e) {
 	spin('sendButton');
 	if (isNaN(amount) || (amount <= 0)) {
 		alertMessage('INVALID', '');
+		$('#sendButton').html('Send');
 		return;
 	}
 	if (sendSelection.id === ZERO) {
