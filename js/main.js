@@ -59,9 +59,9 @@ async function updateBalanceTable() {
 	else U = ' <span class="text-secondary">('+sign +(U/1e8).toFixed(8)+')</span>';
 	
 	var tr = '<tr id="'+sc+'" class="balanceRow">' +
-			'<th scope="col" class="type"><span class="'+type[0]+'">'+type[1]+'</span></th>' +
-			'<th scope="col" class="oracle">'+i[0]+'</th>' +
-			'<th scope="col">'+(i[2]/1e8).toFixed(8)+U+'</th>' +
+			'<td scope="col" class="type"><span class="'+type[0]+'">'+type[1]+'</span></td>' +
+			'<td scope="col" class="oracle">'+i[0]+'</td>' +
+			'<td scope="col">'+(i[2]/1e8).toFixed(8)+U+'</td>' +
 		'</tr>';
 		html += tr;
 	}
@@ -70,7 +70,7 @@ async function updateBalanceTable() {
 		e.preventDefault();
 		var type = parseInt(e.currentTarget.id[0]);
 		var id = e.currentTarget.id.substring(1);
-		var name = $(this).children('th.oracle').text();
+		var name = $(tdis).children('td.oracle').text();
 		updateSendSelection(name, id, type)
 	});
 };
@@ -96,7 +96,8 @@ async function getOffers() {
 	var markets = await rpc.apost(["markets"], CONTRACT_IP, CONTRACT_PORT);
 	markets = markets.slice(1);
 	res = [];
-	markets.forEach(async function(m) {
+	for (var i = 0; i < markets.length; i+=1) {
+		m = markets[i];
 		//lol atob('JFZFTw==') -> $VEO
 		var c1 = m[4] === 0 ? [0, 'JFZFTw=='] : await rpc.apost(["read", 3, m[3]], CONTRACT_IP, CONTRACT_PORT);
 		var text1 = c1 ? atob(c1[1]) : undefined;
@@ -105,14 +106,53 @@ async function getOffers() {
 		var offers = await rpc.apost(["read", m[2]], CONTRACT_IP, CONTRACT_PORT);
 		offers = offers[1][7];
 		offers = offers.slice(1);
-		offers.forEach(async function(o) {
-			console.log(o);
+		for (var j = 0; j < offers.length; j+=1) {
+			var o = offers[j];
 			var offer = await rpc.apost(["read", 2, o[3]], CONTRACT_IP, CONTRACT_PORT);
-			res.push({text1: text1, text2: text2, offer: offer})
-		})
-	});
+			res.push({text1: text1, text2: text2, offer: offer});
+		}
+	}
 	return res;
 }
+
+async function updateOfferTable() {
+	var html ='';
+	var offers = await getOffers();
+	offers.forEach(function(o) {
+		var offer = o.offer[1];
+		var t1, t2;
+		if (o.text1 === '$VEO') t1 = '<span class="text-info">$VEO</span>';
+		else t1 = offer[5] === 1 ? '<span class="text-primary">TRUE</span> ' + o.text1: '<span class="text-warning">FALSE</span> ' + o.text1;
+		if (o.text2 === '$VEO') t2 = '<span class="text-info">$VEO</span>';
+		else t2 = offer[8] === 1 ? '<span class="text-primary">TRUE</span> ' + o.text2: '<span class="text-warning">FALSE</span> ' + o.text2;
+		var tr = '<tr id="'+offer[9]+'" class="offerRow">' +
+			'<td scope="col" class="accountCol" style="display:none">'+offer[1].substring(0,5)+'</td>' +
+			'<td scope="col" class="startCol" style="display:none">'+offer[2]+'</td>' +
+			'<td scope="col" class="endCol" style="display:none">'+offer[3]+'</td>' +
+			'<td scope="col" class="cid1Col" style="display:none">'+offer[4]+'</td>' +
+			'<td scope="col" class="type1Col" style="display:none">'+offer[5]+'</td>' +
+			'<td scope="col" class="text1Col" style="display:none">'+t1+'</td>' +
+			'<td scope="col" class="amount1Col" style="display:none">'+(offer[6]/1e8).toFixed(8)+'</td>' +
+			'<td scope="col" class="cid2Col" style="display:none">'+offer[7]+'</td>' +
+			'<td scope="col" class="type2Col" style="display:none">'+offer[8]+'</td>' +
+			'<th scope="col" class="text2Col" style="display:none">'+t2+'</th>' +
+			'<td scope="col" class="amount2Col" style="display:none">'+(offer[9]/1e8).toFixed(8)+'</td>' +
+			'<td scope="col" class="saltCol" style="display:none">'+offer[10]+'</td>' +
+			'<td scope="col" class="nonceCol" style="display:none">'+offer[11]+'</td>' +
+			'<td scope="col" class="partsCol" style="display:none">'+offer[11]+'</td>' +
+		'</tr>';
+		html += tr;
+	});
+	console.log(html);
+	$('#offers').html(html);
+	$('.accountCol').show();
+	$('.text1Col').show();
+	$('.text2Col').show();
+	$('.amount1Col').show();
+	$('.amount2Col').show();
+	$('#offersHead').show();
+};
+
 
 function route(r) {
 	$('.route').hide();
@@ -200,7 +240,7 @@ $('#maxButton').click(async function(e) {
 $('#sendButton').click(async function(e) {
 	e.preventDefault();
 	var to = $('#recipient').val();
-	amount = Math.floor(parseFloat($('#sendAmount').val()) * 1e8);
+	amount = Matd.floor(parseFloat($('#sendAmount').val()) * 1e8);
 	spin('sendButton');
 	if (isNaN(amount) || (amount <= 0)) {
 		alertMessage('INVALID', '');
@@ -282,8 +322,8 @@ $('#createButton').click(async function(e) {
 	spin('createButton');
 	var statement = $('#statement').val();
 	var type = $('#statementSelect').val() === 'True' ? 1 : 2; 
-	var risk = Math.floor(parseFloat($('#amount1').val()) * 1e8);
-	var toWin = Math.floor(parseFloat($('#amount2').val()) * 1e8);
+	var risk = Matd.floor(parseFloat($('#amount1').val()) * 1e8);
+	var toWin = Matd.floor(parseFloat($('#amount2').val()) * 1e8);
 	var expires = parseInt($('#expires').val());
 	[risk, toWin, expires].forEach(function(i) {
 		if (isNaN(i) || (i <= 0)) {
