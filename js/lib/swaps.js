@@ -85,7 +85,7 @@ var swaps = (function(){
     function unpack(SO) {
 //-record(swap_tx, {from, offer, fee}).
         //-record(swap_tx2, {from, nonce, fee, offer, match_parts}).
-        console.log(JSON.stringify(SO));
+        //console.log(JSON.stringify(SO));
         var b = verify1(SO);
         if(!b){
             console.log("bad signature on offer");
@@ -93,7 +93,7 @@ var swaps = (function(){
         };
         var offer = SO[1];
         var swap_type = offer[0];
-        console.log(JSON.stringify(swap_type));
+        //console.log(JSON.stringify(swap_type));
         if(swap_type === "swap_offer") {
             var R = {};
             R.acc1 = offer[1];

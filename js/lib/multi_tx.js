@@ -118,7 +118,7 @@ var multi_tx = (function(){
         var fee = 152050;
         var Acc = await rpc.apost(["account", keys.pub()]);
         var Nonce = Acc[2] + 1;
-        var txlist = await apay_dev_tx(Txs);
+        //var txlist = await apay_dev_tx(Txs);
        // Txs = Txs.concat(txlist);//comment out this line to not pay the dev fee.
         Txs = zero_accounts_nonces(Txs);
         return(["multi_tx", keys.pub(), Nonce, Math.round(1.1*fee*(Txs.length)), [-6].concat(Txs)]);
