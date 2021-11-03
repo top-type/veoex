@@ -69,7 +69,7 @@ async function updateBalanceTable() {
 		e.preventDefault();
 		var type = parseInt(e.currentTarget.id[0]);
 		var id = e.currentTarget.id.substring(1);
-		var name = $(tdis).children('td.oracle').text();
+		var name = $(this).children('td.oracle').text();
 		updateSendSelection(name, id, type)
 	});
 };
@@ -117,6 +117,7 @@ async function getOffers() {
 
 async function acceptOffer(offerObj) {
 	var o = swaps.unpack(offerObj.offer);
+	var offer99;
 	if (o.type1 !== 0) {
 		if (createCid(offerObj.text1, 1) !== o.cid1) return false;
 		var contract1 = await merkle.arequest_proof("contracts", o.cid1);
@@ -126,10 +127,15 @@ async function acceptOffer(offerObj) {
 		if (createCid(offerObj.text2, 1) !== o.cid2) return false;
 		var b = balanceDB[o.type2+o.cid2];
 		if (!b) b = 0;
+		else b = b[3]
 		var missingAmount = o.amount2 - b;
 		var mintTx;
 		if (missingAmount > 0) {
 			mintTx = ["contract_use_tx", 0, 0, 0, o.cid2, missingAmount, 2, ZERO, 0];
+			offer99 = swaps.offer_99(o);
+			offer99.type1 = 3 - o.type2;
+			offer99.amount1 = missingAmount;
+			
 		}
 		var contract2 = await merkle.arequest_proof("contracts", o.cid2);
 		var contractTx;
@@ -145,8 +151,11 @@ async function acceptOffer(offerObj) {
 	if (mintTx) txs.push(mintTx);
 	txs.push(swapTx);
 	var multiTx = await multi_tx.amake(txs);
-	var stx = keys.sign(multiTx);
-	return stx;
+	var signed = [keys.sign(multiTx)];
+	var res1 = await rpc.apost(["txs", [-6].concat(signed)]);
+	console.log(offer99);
+	var res2 = offer99 ? await rpc.apost(["add", swaps.pack(offer99), 0]) : undefined;
+	return [res1, res2];
 }
 
 async function updateOfferTable() {
@@ -158,9 +167,9 @@ async function updateOfferTable() {
 		if (!offer) return; //invalid sig
 		var t1, t2;
 		if (offerObj.text1 === '$VEO') t1 = '<span class="text-info">$VEO</span>';
-		else t1 = offer[5] === 1 ? '<span class="text-primary">TRUE</span> ' + offerObj.text1: '<span class="text-warning">FALSE</span> ' + offerObj.text1;
+		else t1 = offer.type1 === 1 ? '<span class="text-primary">TRUE</span> ' + offerObj.text1: '<span class="text-warning">FALSE</span> ' + offerObj.text1;
 		if (offerObj.text2 === '$VEO') t2 = '<span class="text-info">$VEO</span>';
-		else t2 = offer[8] === 1 ? '<span class="text-primary">TRUE</span> ' + offerObj.text2: '<span class="text-warning">FALSE</span> ' + offerObj.text2;
+		else t2 = offer.type2 === 1 ? '<span class="text-primary">TRUE</span> ' + offerObj.text2: '<span class="text-warning">FALSE</span> ' + offerObj.text2;
 		var tr = '<tr id="'+offerObj.id+'" class="offerRow">' +
 			'<td scope="col" class="accountCol" style="display:none">'+offer.acc1.substring(0,5)+'</td>' +
 			'<td scope="col" class="startCol" style="display:none">'+offer.start_limit+'</td>' +
@@ -172,7 +181,7 @@ async function updateOfferTable() {
 			'<td scope="col" class="riskCol" style="display:none">'+((offer.amount2-offer.amount1)/1e8).toFixed(8)+'</td>' +
 			'<td scope="col" class="cid2Col" style="display:none">'+offer.cid2 +'</td>' +
 			'<td scope="col" class="type2Col" style="display:none">'+offer.type2+'</td>' +
-			'<th scope="col" class="text2Col" style="display:none">'+t2+'</th>' +
+			'<td scope="col" class="text2Col" style="display:none">'+t2+'</td>' +
 			'<td scope="col" class="amount2Col" style="display:none">'+(offer.amount2/1e8).toFixed(8)+'</td>' +
 			'<td scope="col" class="toWinCol" style="display:none">'+(offer.amount1/1e8).toFixed(8)+'</td>' +
 			'<td scope="col" class="saltCol" style="display:none">'+offer.salt+'</td>' +
@@ -192,7 +201,11 @@ async function updateOfferTable() {
 	$('.offerRow').click(async function(e) {
 			e.preventDefault();
 			var t = tidLookup[e.currentTarget.id];
-			console.log(await(acceptOffer(t)));
+			confirmAction('Accept offer? ' + t.text1 + ' ' + t.text2, 'Accept', async function () {
+				res = await acceptOffer(t);
+				alertMessage('Accept', res);
+			});
+			
 		});
 };
 
