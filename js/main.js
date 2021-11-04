@@ -1,6 +1,10 @@
-var balanceDB = {};
 var MODE = 0;
 var ZERO = btoa(array_to_string(integer_to_array(0, 32)));
+var balanceDB = {};
+var offerDB = {};
+var oracleDB = {};
+oracleDB[ZERO] = "$VEO";
+
 var sendSelection = {}
 
 function updateSendSelection(name, id, type) {
@@ -92,27 +96,39 @@ function createOffer(text1, type1, text2, type2, amount1, amount2, mp1, mp2, exp
 	
 }
 
-async function getOffers() {
+async function updateOffers() {
 	var markets = await rpc.apost(["markets"], CONTRACT_IP, CONTRACT_PORT);
 	markets = markets.slice(1);
-	res = [];
+	seenIds = {}; //to know what to remove
 	for (var i = 0; i < markets.length; i+=1) {
 		m = markets[i];
-		//lol atob('JFZFTw==') -> $VEO
-		var c1 = m[4] === 0 ? [0, 'JFZFTw=='] : await rpc.apost(["read", 3, m[3]], CONTRACT_IP, CONTRACT_PORT);
-		var text1 = c1 ? atob(c1[1]) : undefined;
-		var c2 = m[6] === 0 ? [0, 'JFZFTw=='] : await rpc.apost(["read", 3, m[5]], CONTRACT_IP, CONTRACT_PORT);
-		var text2 = c2 ? atob(c2[1]) : undefined;
+		var text1 = oracleDB[m[3]];
+		if (!text1) {
+			var c1 = await rpc.apost(["read", 3, m[3]], CONTRACT_IP, CONTRACT_PORT);
+			text1 = c1 ? atob(c1[1]) : undefined;
+			if (text1) oracleDB[m[3]] = text1;
+		}
+		var text2 = oracleDB[m[5]];
+		if (!text2) {
+			var c2 = await rpc.apost(["read", 3, m[5]], CONTRACT_IP, CONTRACT_PORT);
+			text2 = c2 ? atob(c2[1]) : undefined;
+			if (text2) oracleDB[m[5]] = text2;
+		}
+		
 		var offers = await rpc.apost(["read", m[2]], CONTRACT_IP, CONTRACT_PORT);
 		offers = offers[1][7];
 		offers = offers.slice(1);
 		for (var j = 0; j < offers.length; j+=1) {
 			var o = offers[j];
+			seenIds[o[3]] = true;
+			if (offerDB[o[3]]) continue;
 			var offer = await rpc.apost(["read", 2, o[3]], CONTRACT_IP, CONTRACT_PORT);
-			res.push({id: o[3], text1: text1, text2: text2, offer: offer});
+			offerDB[o[3]] = {id: o[3], text1: text1, text2: text2, offer: offer};
 		}
 	}
-	return res;
+	for (property in offerDB) {
+		if (!seenIds[property]) delete offerDB[property];
+	}
 }
 
 async function acceptOffer(offerObj) {
@@ -158,9 +174,9 @@ async function acceptOffer(offerObj) {
 	return [res1, res2];
 }
 
-async function updateOfferTable() {
+function updateOfferTable() {
 	var html ='';
-	var offers = await getOffers();
+	var offers = Object.values(offerDB);
 	tidLookup = {};
 	offers.forEach(function(offerObj) {
 		var offer = swaps.unpack(offerObj.offer);
@@ -531,8 +547,11 @@ $(document).ready(async function () {
 	
 	await updateBalances();
 	await updateBalanceTable();
+	await updateOffers();
 	setInterval(updatePubDisplay, 10000);
 	setInterval(updateBalances, 20000);
 	setInterval(updateBalanceTable, 5000);
+	setInterval(updateOffers, 30000);
+	setInterval(updateOfferTable, 5000);
 	console.log('hello');
 });
