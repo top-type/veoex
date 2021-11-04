@@ -1,7 +1,7 @@
 var MODE = 0;
 var ZERO = btoa(array_to_string(integer_to_array(0, 32)));
-var balanceDB = {};
-var offerDB = {};
+var balanceDB = JSON.parse(localStorage.getItem("balances")) || {};
+var offerDB = JSON.parse(localStorage.getItem("offers")) || {};
 var oracleDB = {};
 oracleDB[ZERO] = "$VEO";
 
@@ -25,7 +25,7 @@ function spin(id) {
 async function updateBalances() {
 	var account = await rpc.apost(["account", keys.pub()], EXPLORER_IP, EXPLORER_PORT);
 	var contractIds = account[1][3].slice(1);
-	contractIds.forEach(async function(id) {
+	await contractIds.forEach(async function(id) {
 		var type1 = await sub_accounts.normal_key(keys.pub(), id, 1);
 		var sub1C = await merkle.arequest_proof("sub_accounts", type1);
 		var sub1U = await rpc.apost(["sub_accounts", type1]);
@@ -46,10 +46,10 @@ async function updateBalances() {
 		}
 		else delete balanceDB[2+id];
 	});
-	
+	localStorage.setItem("balances", JSON.stringify(balanceDB));
 }
 
-async function updateBalanceTable() {
+function updateBalanceTable() {
 	$('#balances').html('');
 	var html = '';
 	for (const sc in balanceDB) {
@@ -129,6 +129,7 @@ async function updateOffers() {
 	for (property in offerDB) {
 		if (!seenIds[property]) delete offerDB[property];
 	}
+	localStorage.setItem("offers", JSON.stringify(offerDB));
 }
 
 async function acceptOffer(offerObj) {
@@ -544,9 +545,10 @@ $(document).ready(async function () {
 		$('.accountNotSet').show();
 		route('newAccount');
 	}
+	updateBalanceTable();
+	updateOfferTable();
 	
 	await updateBalances();
-	await updateBalanceTable();
 	await updateOffers();
 	setInterval(updatePubDisplay, 10000);
 	setInterval(updateBalances, 20000);
