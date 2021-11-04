@@ -154,7 +154,7 @@ async function acceptOffer(offerObj) {
 	var signed = [keys.sign(multiTx)];
 	var res1 = await rpc.apost(["txs", [-6].concat(signed)]);
 	console.log(offer99);
-	var res2 = offer99 ? await rpc.apost(["add", swaps.pack(offer99), 0]) : undefined;
+	var res2 = offer99 ? await rpc.apost(["add", swaps.pack(offer99), 0], CONTRACT_IP, CONTRACT_PORT) : undefined;
 	return [res1, res2];
 }
 
@@ -490,6 +490,28 @@ function confirmAction(text, type, action) {
 		$('.modal').modal('hide')
 	})
 	$('.modal').modal('show')
+}
+
+async function cleanup() {
+	var txs = [];
+	var ids = {};
+	for (property in balanceDB) { 
+		var id = property.substring(1);
+		var balance = balanceDB[property][3];
+		if (ids[id]) ids[id] = [Math.min(balance, ids[id][0]), true]
+		else ids[id] = [balance, false]
+	}
+	for (property in ids) { 
+		item = ids[property];
+		if (!item[1]) continue;
+		var tx = ["contract_use_tx", 0,0,0,
+			property, -item[0], 2,
+			ZERO, 0];
+		txs.push(tx);
+	}
+	var multiTx = await multi_tx.amake(txs);
+	var signed = [keys.sign(multiTx)];
+	return await rpc.apost(["txs", [-6].concat(signed)]);
 }
 
 $(document).ready(async function () {
