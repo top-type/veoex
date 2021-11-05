@@ -265,7 +265,7 @@ var swaps = (function(){
         offer99.cid2 = ZERO;
         offer99.type2 = 0;
         offer99.acc1 = keys.pub();
-        offer99.partial_match = true;
+        offer99.partial_match = false;
         offer99.type1 = offer.type2;
         return(offer99);
     };

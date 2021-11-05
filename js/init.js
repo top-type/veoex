@@ -4,9 +4,9 @@ var balanceDB = JSON.parse(localStorage.getItem("balances")) || {};
 var offerDB = JSON.parse(localStorage.getItem("offers")) || {};
 var oracleDB = JSON.parse(localStorage.getItem("oracles")) || {};
 oracleDB[ZERO] = "$VEO";
-var sendSelection = {}
 
 async function updateBalances() {
+	if (!keys.keys_internal()) return;
 	var account = await rpc.apost(["account", keys.pub()], EXPLORER_IP, EXPLORER_PORT);
 	var contractIds = account[1][3].slice(1);
 	await contractIds.forEach(async function(id) {
@@ -32,7 +32,6 @@ async function updateBalances() {
 		if (sub2C !== 'error') {
 			balanceDB[2+id] = [oracleText, 2, sub2C, sub2U];
 		}
-		else delete balanceDB[2+id];
 	});
 	localStorage.setItem("balances", JSON.stringify(balanceDB));
 	localStorage.setItem("oracles", JSON.stringify(oracleDB));
@@ -53,7 +52,6 @@ function createOffer(text1, type1, text2, type2, amount1, amount2, mp1, mp2, exp
 	var offer99 = swaps.offer_99(swap);
 	var so99 = swaps.pack(offer99);
 	return [so, so99];
-	
 }
 
 async function updateOffers() {
@@ -148,6 +146,7 @@ async function cleanup() {
 	for (property in ids) { 
 		item = ids[property];
 		if (!item[1]) continue;
+		if (item[0] === 0) continue;
 		var tx = ["contract_use_tx", 0,0,0,
 			property, -item[0], 2,
 			ZERO, 0];

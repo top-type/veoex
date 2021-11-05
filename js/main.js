@@ -1,3 +1,4 @@
+var sendSelection = {}
 function updateSendSelection(name, id, type) {
 	sendSelection.name = name;
 	sendSelection.id = id;
@@ -48,13 +49,20 @@ function updateOfferTable() {
 	tidLookup = {};
 	offers.forEach(function(offerObj) {
 		var offer = swaps.unpack(offerObj.offer);
+		var veoHtml = '<span class="text-info">$VEO</span>';
+		var falseHtml = '<span class="text-warning">FALSE</span> ';
+		var trueHtml = '<span class="text-primary">TRUE</span> ';
 		if (!offer) return; //invalid sig
-		var t1, t2;
-		if (offerObj.text1 === '$VEO') t1 = '<span class="text-info">$VEO</span>';
-		else t1 = offer.type1 === 1 ? '<span class="text-primary">TRUE</span> ' + offerObj.text1: '<span class="text-warning">FALSE</span> ' + offerObj.text1;
-		if (offerObj.text2 === '$VEO') t2 = '<span class="text-info">$VEO</span>';
-		else t2 = offer.type2 === 1 ? '<span class="text-primary">TRUE</span> ' + offerObj.text2: '<span class="text-warning">FALSE</span> ' + offerObj.text2;
-		var tr = '<tr id="'+offerObj.id+'" class="offerRow">' +
+		var t1, t2, ifText;
+		if (offerObj.text1 === '$VEO') t1 = veoHtml;
+		else t1 = offer.type1 === 1 ? trueHtml + offerObj.text1 :  falseHtml + offerObj.text1;
+		if (offerObj.text2 === '$VEO') t2 = veoHtml;
+		else {
+			t2 = offer.type2 === 1 ? trueHtml + offerObj.text2 : falseHtml + offerObj.text2;
+			ifText = offer.type2 === 1 ? falseHtml + offerObj.text2 : trueHtml + offerObj.text2
+		}
+		var visibility = (MODE === 0) && (offerObj.text1 !== '$VEO') ? 'none' : 'visible';
+		var tr = '<tr id="'+offerObj.id+'" class="offerRow" style="display:'+visibility+'">' +
 			'<td scope="col" class="accountCol" style="display:none">'+offer.acc1.substring(0,5)+'</td>' +
 			'<td scope="col" class="startCol" style="display:none">'+offer.start_limit+'</td>' +
 			'<td scope="col" class="endCol" style="display:none">'+offer.end_limit+'</td>' +
@@ -68,6 +76,7 @@ function updateOfferTable() {
 			'<td scope="col" class="text2Col" style="display:none">'+t2+'</td>' +
 			'<td scope="col" class="amount2Col" style="display:none">'+(offer.amount2/1e8).toFixed(8)+'</td>' +
 			'<td scope="col" class="toWinCol" style="display:none">'+(offer.amount1/1e8).toFixed(8)+'</td>' +
+			'<td scope="col" class="ifCol" style="display:none">'+ifText+'</td>' +
 			'<td scope="col" class="saltCol" style="display:none">'+offer.salt+'</td>' +
 			'<td scope="col" class="nonceCol" style="display:none">'+offer.nonce+'</td>' +
 			'<td scope="col" class="partsCol" style="display:none">'+offer.parts+'</td>' +
@@ -75,13 +84,22 @@ function updateOfferTable() {
 		html += tr;
 	tidLookup[offerObj.id] = offerObj;
 	});
+	
 	$('#offers').html(html);
-	$('.accountCol').show();
-	$('.text1Col').show();
-	$('.text2Col').show();
-	$('.amount1Col').show();
-	$('.amount2Col').show();
-	$('#offersHead').show();
+	if (MODE === 0) {
+		$('.riskCol').show();
+		$('.toWinCol').show();
+		$('.ifCol').show();
+		$('#offersHead').hide();
+	}
+	else {
+		$('.accountCol').show();
+		$('.text1Col').show();
+		$('.text2Col').show();
+		$('.amount1Col').show();
+		$('.amount2Col').show();
+		$('#offersHead').show();
+	}
 	$('.offerRow').click(async function(e) {
 			e.preventDefault();
 			var t = tidLookup[e.currentTarget.id];
@@ -291,14 +309,18 @@ $('#createButton').click(async function(e) {
 	$('#createButton').html('Create');
 	confirmAction(desc, 'Create', async function() {
 		var res = await rpc.apost(["add", offers[0], offers[1]], CONTRACT_IP, CONTRACT_PORT);
-		alertMessage('CREATE', '')
+		alertMessage('CREATE', res)
 		$('.createInput').val('');
 	});
 });
 
 $('#modeSelect').on('change', function (e) {
     e.preventDefault();
-	alertMessage('SET', $('#modeSelect').val())
+	var m = $('#modeSelect').val();
+	if (m === 'Basic') MODE = 0;
+	else MODE = 1;
+	updateOfferTable();
+	alertMessage('SET', m)
 });
 
 $('#nodeButton').click(function(e) {
@@ -340,9 +362,13 @@ function alertMessage(type, message) {
 
 function forget() {
 	keys.forget();
-	localStorage.removeItem('passphrase')
 	$('#pub').text('');
 	$('.navbar-brand').text('VEOEX');
+	localStorage.removeItem('passphrase')
+	localStorage.setItem('balances', JSON.stringify({}));
+	balanceDB = {};
+	updateBalanceTable();
+	
 }
 
 async function updatePubDisplay() {
