@@ -90,20 +90,28 @@ function updateOfferTable() {
 		$('.riskCol').show();
 		$('.toWinCol').show();
 		$('.ifCol').show();
-		$('#offersHead').hide();
 	}
 	else {
-		$('.accountCol').show();
 		$('.text1Col').show();
 		$('.text2Col').show();
 		$('.amount1Col').show();
 		$('.amount2Col').show();
-		$('#offersHead').show();
 	}
 	$('.offerRow').click(async function(e) {
 			e.preventDefault();
 			var t = tidLookup[e.currentTarget.id];
-			confirmAction('Accept offer? ' + t.text1 + ' ' + t.text2, 'Accept', async function () {
+			if (MODE === 0) {
+				var riskAmount = $(this).children('.riskCol').html();
+				var winAmount = $(this).children('.toWinCol').html();
+				var ifText = $(this).children('.ifCol').html();
+				var acceptText = 'Risk: ' + riskAmount + '<br> Win: ' + winAmount + '<br> If: ' + ifText;
+			}
+			else {
+				var gainText = $(this).children('.amount1Col').html() + ' ' + $(this).children('.text1Col').html();
+				var loseText = $(this).children('.amount2Col').html() + ' ' + $(this).children('.text2Col').html();
+				var acceptText = 'Gain: ' + gainText + '<br> Lose: ' + loseText;
+			}
+			confirmAction(acceptText, 'Accept', async function () {
 				res = await acceptOffer(t);
 				alertMessage('Accept', res);
 			});
