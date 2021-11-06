@@ -1,40 +1,48 @@
 var MODE = 0;
 var ZERO = btoa(array_to_string(integer_to_array(0, 32)));
-var balanceDB = JSON.parse(localStorage.getItem("balances")) || {};
+var balanceDB = {};
 var offerDB = JSON.parse(localStorage.getItem("offers")) || {};
 var oracleDB = JSON.parse(localStorage.getItem("oracles")) || {};
 oracleDB[ZERO] = "$VEO";
+
+async function updateBalance(contractId, type) {
+	if (!keys.keys_internal()) return false;
+	var subKey = sub_accounts.normal_key(keys.pub(), contractId, type);
+	try {
+		var C = await merkle.arequest_proof("sub_accounts", subKey);
+	}
+	catch {
+		return false;
+	}
+	if (C === 'empty') C = ['sub_acc', 0];
+	try {
+		var U = await rpc.apost(["sub_accounts", subKey]);
+	}
+	catch {
+		return false;
+	}
+	if (!U) U = ['sub_acc', C[1]];
+	var oracleText = oracleDB[contractId];
+	if (!oracleText) {
+			oracleText = await rpc.apost(["read", 3, contractId], CONTRACT_IP, CONTRACT_PORT);
+			oracleText = oracleText ? atob(oracleText[1]) : undefined;
+			if (oracleText) {
+				oracleDB[id] = oracleText;
+				localStorage.setItem("oracles", JSON.stringify(oracleDB));
+			}
+		}
+	balanceDB[type + contractId] = {text: oracleText, type: type, confirmed: C[1], unconfirmed: U[1]};
+}
 
 async function updateBalances() {
 	if (!keys.keys_internal()) return;
 	var account = await rpc.apost(["account", keys.pub()], EXPLORER_IP, EXPLORER_PORT);
 	var contractIds = account[1][3].slice(1);
-	await contractIds.forEach(async function(id) {
-		var type1 = await sub_accounts.normal_key(keys.pub(), id, 1);
-		var sub1C = await merkle.arequest_proof("sub_accounts", type1);
-		var sub1U = await rpc.apost(["sub_accounts", type1]);
-		var type2 = await sub_accounts.normal_key(keys.pub(), id, 2);
-		var sub2C = await merkle.arequest_proof("sub_accounts", type2);
-		var sub2U = await rpc.apost(["sub_accounts", type2]);
-		var oracleText = oracleDB[id];
-		if (!oracleText) {
-			oracleText = await rpc.apost(["read", 3, id], CONTRACT_IP, CONTRACT_PORT);
-			oracleText = oracleText ? atob(oracleText[1]) : undefined;
-			if (oracleText) oracleDB[id] = oracleText;
-		}
-		sub1C = sub1C[0] === 'sub_acc' ? sub1C[1] : 'error';
-		sub1U = sub1U[0] === 'sub_acc' ? sub1U[1] : sub1C;
-		sub2C = sub2C[0] === 'sub_acc' ? sub2C[1] : 'error';
-		sub2U = sub2U[0] === 'sub_acc' ? sub2U[1] : sub2C;
-		if (sub1C !== 'error') {
-			balanceDB[1+id] = [oracleText, 1, sub1C, sub1U];
-		}
-		if (sub2C !== 'error') {
-			balanceDB[2+id] = [oracleText, 2, sub2C, sub2U];
-		}
-	});
-	localStorage.setItem("balances", JSON.stringify(balanceDB));
-	localStorage.setItem("oracles", JSON.stringify(oracleDB));
+	for (var i = 0; i < contractIds.length; i+=1) {
+		var id = contractIds[i];
+		await updateBalance(id, 1);
+		await updateBalance(id, 2);
+	};
 }
 
 function createCid(text, mp) {

@@ -19,17 +19,17 @@ function updateBalanceTable() {
 	var html = '';
 	for (const sc in balanceDB) {
 	var i = balanceDB[sc];
-	if ((i[2] === 0) && (i[3] === 0)) continue;
-	var type = i[1] === 1 ? ['text-primary', 'TRUE'] : ['text-warning', 'FALSE'];
-	var U = i[3] - i[2];
+	//if ((i.confirmed === 0) && (i.unconfirmed === 0)) continue;
+	var type = i.type === 1 ? ['text-primary', 'TRUE'] : ['text-warning', 'FALSE'];
+	var U = i.unconfirmed - i.confirmed;
 	var sign = (U > 0) ? '+' : '';
 	if (U === 0) U = '';
 	else U = ' <span class="text-secondary">('+sign +(U/1e8).toFixed(8)+')</span>';
 	
 	var tr = '<tr id="'+sc+'" class="balanceRow">' +
 			'<td scope="col" class="type"><span class="'+type[0]+'">'+type[1]+'</span></td>' +
-			'<td scope="col" class="oracle">'+i[0]+'</td>' +
-			'<td scope="col">'+(i[2]/1e8).toFixed(8)+U+'</td>' +
+			'<td scope="col" class="oracle">'+i.text+'</td>' +
+			'<td scope="col">'+(i.confirmed/1e8).toFixed(8)+U+'</td>' +
 		'</tr>';
 		html += tr;
 	}
@@ -197,7 +197,7 @@ $('#maxButton').click(async function(e) {
 		$('#maxButton').html('Max');
 	}
 	else {
-		var max = balanceDB[sendSelection.type + sendSelection.id][3];
+		var max = balanceDB[sendSelection.type + sendSelection.id].unconfirmed;
 		$('#sendAmount').val((max/1e8).toFixed(8));
 	}
 });
@@ -373,7 +373,6 @@ function forget() {
 	$('#pub').text('');
 	$('.navbar-brand').text('VEOEX');
 	localStorage.removeItem('passphrase')
-	localStorage.setItem('balances', JSON.stringify({}));
 	balanceDB = {};
 	updateBalanceTable();
 	
@@ -423,14 +422,12 @@ $(document).ready(async function () {
 		$('.accountNotSet').show();
 		route('newAccount');
 	}
-	updateBalanceTable();
-	updateOfferTable();
-	await updateBalances();
-	await updateOffers();
+	updateOffers();
+	updateBalances();
 	setInterval(updatePubDisplay, 10000);
-	setInterval(updateBalances, 20000);
-	setInterval(updateBalanceTable, 5000);
 	setInterval(updateOffers, 30000);
 	setInterval(updateOfferTable, 5000);
+	setInterval(updateBalances, 20000);
+	setInterval(updateBalanceTable, 5000);
 	console.log('hello');
 });
