@@ -31,7 +31,7 @@ async function updateBalance(contractId, type) {
 				localStorage.setItem("oracles", JSON.stringify(oracleDB));
 			}
 		}
-	balanceDB[type + contractId] = {text: oracleText, type: type, confirmed: C[1], unconfirmed: U[1]};
+	balanceDB[subKey] = {text: oracleText, type: type, confirmed: C[1], unconfirmed: U[1]};
 }
 
 async function updateBalances() {
@@ -147,7 +147,7 @@ async function cleanup() {
 	var ids = {};
 	for (property in balanceDB) { 
 		var id = property.substring(1);
-		var balance = balanceDB[property][3];
+		var balance = balanceDB[property].unconfirmed;
 		if (ids[id]) ids[id] = [Math.min(balance, ids[id][0]), true]
 		else ids[id] = [balance, false]
 	}
@@ -161,6 +161,7 @@ async function cleanup() {
 		txs.push(tx);
 	}
 	var multiTx = await multi_tx.amake(txs);
+	console.log(multiTx);
 	var signed = [keys.sign(multiTx)];
 	return await rpc.apost(["txs", [-6].concat(signed)]);
 }

@@ -1,3 +1,5 @@
-rewrite balancemanager
+buggy 0.0003 sub balance...
+buggy unconf 0 balance
+
 while accept succeed simulate effects also in offerDB and redraw
 only ask conf balance update when height changes
